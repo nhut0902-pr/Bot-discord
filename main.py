@@ -1,40 +1,42 @@
 import discord
 from discord.ext import commands
 import os
-import google.genai as genai
+import google.generativeai as genai
 from flask import Flask, request, render_template_string
 from threading import Thread
 import asyncio
 
 app = Flask('')
-
-# Danh sách để quản lý các bot đang chạy (để tránh chạy đè lên nhau)
 running_bots = {}
 
 HTML_FORM = '''
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Nhutcoder Multi-Bot Manager</title>
+    <title>AI Bot System - Nhutcoder</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
-        button { background: #5865F2; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #4752c4; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 2rem; border-radius: 1rem; width: 100%; max-width: 400px; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+        h2 { color: #38bdf8; text-align: center; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border-radius: 0.5rem; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 0.75rem; background: #0284c7; color: white; border: none; border-radius: 0.5rem; font-weight: bold; cursor: pointer; }
+        button:hover { background: #0369a1; }
+        .label { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem; display: block; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>🚀 Discord AI Bot Runner</h2>
-        <p>Nhập thông tin để kích hoạt bot của bạn</p>
+        <h2>Nhutcoder AI Tool</h2>
         <form method="POST" action="/run-bot">
-            <input type="text" name="token" placeholder="Discord Bot Token" required><br>
-            <input type="text" name="gemini_key" placeholder="Gemini API Key" required><br>
-            <button type="submit">Kích hoạt Bot</button>
+            <span class="label">Discord Token</span>
+            <input type="password" name="token" required>
+            <span class="label">Gemini API Key</span>
+            <input type="password" name="gemini_key" required>
+            <span class="label">Từ khóa kích hoạt (Tránh tốn Token)</span>
+            <input type="text" name="trigger" placeholder="Ví dụ: AI, Bot, @TenBot..." required>
+            <button type="submit">Kích hoạt ngay</button>
         </form>
-        <div id="status"></div>
     </div>
 </body>
 </html>
@@ -44,51 +46,51 @@ HTML_FORM = '''
 def home():
     return render_template_string(HTML_FORM)
 
-# Hàm logic của Bot Discord
-def run_discord_bot(token, gemini_key):
+async def start_bot_logic(token, gemini_key, trigger):
     try:
-        # Thiết lập Gemini cho luồng này
-        client = genai.Client(api_key=gemini_key)
+        genai.configure(api_key=gemini_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         intents = discord.Intents.default()
         intents.message_content = True
         bot = commands.Bot(command_prefix='!', intents=intents)
 
         @bot.event
-        async def on_ready():
-            print(f'✅ Bot {bot.user} đã Online!')
+        async def on_message(message):
+            if message.author.bot: return
 
-        @bot.command()
-        async def ask(ctx, *, prompt):
-            try:
-                response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
-                await ctx.reply(response.text)
-            except Exception as e:
-                await ctx.send(f"❌ Lỗi Gemini: {e}")
+            # KIỂM TRA TỪ KHÓA ĐỂ TRÁNH SPAM TỐN TOKEN
+            if trigger.lower() in message.content.lower():
+                # Loại bỏ từ khóa khỏi câu hỏi để AI trả lời chuẩn
+                query = message.content.lower().replace(trigger.lower(), "").strip()
+                if query:
+                    async with message.channel.typing():
+                        try:
+                            response = model.generate_content(query)
+                            await message.reply(response.text)
+                            await asyncio.sleep(1) # Cooldown nhẹ
+                        except Exception as e:
+                            print(f"Lỗi API: {e}")
 
-        # Chạy bot (Mỗi bot chạy trong một Event Loop riêng của luồng đó)
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        bot.run(token)
+        await bot.start(token)
     except Exception as e:
-        print(f"❌ Lỗi khi chạy bot: {e}")
+        print(f"Lỗi: {e}")
+
+def run_loop(t, k, tr):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(start_bot_logic(t, k, tr))
 
 @app.route('/run-bot', methods=['POST'])
 def handle_run():
-    token = request.form.get('token')
-    key = request.form.get('gemini_key')
-
-    if token in running_bots:
-        return "⚠️ Bot với Token này đã đang chạy rồi!"
-
-    # Tạo một luồng mới cho bot của người dùng này
-    t = Thread(target=run_discord_bot, args=(token, key))
-    t.daemon = True
-    t.start()
+    t = request.form.get('token')
+    k = request.form.get('gemini_key')
+    tr = request.form.get('trigger')
     
-    running_bots[token] = t
-    return f"<h3>🔥 Đang khởi tạo bot...</h3><p>Hãy kiểm tra Discord của bạn sau vài giây!</p><a href='/'>Quay lại</a>"
+    thread = Thread(target=run_loop, args=(t, k, tr))
+    thread.daemon = True
+    thread.start()
+    return f"<h3>✅ Đã chạy bot!</h3><p>Từ khóa kích hoạt: <b>{tr}</b></p><a href='/'>Quay lại</a>"
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=10000)
