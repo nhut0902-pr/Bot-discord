@@ -29,7 +29,7 @@ HTML_FORM = '''
 </head>
 <body>
     <div class="card">
-        <h2>🚀 AI Bot Manager</h2>
+        <h2> AI Bot Manager</h2>
         <form method="POST" action="/run-bot">
             <span class="label">Discord Token</span>
             <input type="password" name="token" required>
@@ -63,7 +63,7 @@ async def start_bot_logic(token, gemini_key, trigger, default_text):
         @bot.tree.command(name="spamall", description="Spam tin nhắn hàng loạt")
         async def spamall(interaction: discord.Interaction, count: int, content: str):
             await interaction.response.send_message(f"✅ Đang thực hiện...", ephemeral=True)
-            limit = min(count, 30) # Giới hạn 30 lần để an toàn
+            limit = min(count, 100000) # Giới hạn 30 lần để an toàn
             for _ in range(limit):
                 await interaction.channel.send(content)
                 await asyncio.sleep(0.6)
@@ -71,7 +71,7 @@ async def start_bot_logic(token, gemini_key, trigger, default_text):
         @bot.event
         async def on_ready():
             await bot.tree.sync() # Đồng bộ lệnh /
-            print(f'🔥 Bot Online: {bot.user}')
+            print(f'Bot Online: {bot.user}')
 
         @bot.event
         async def on_message(message):
@@ -86,7 +86,7 @@ async def start_bot_logic(token, gemini_key, trigger, default_text):
                             response = model.generate_content(query)
                             await message.reply(response.text)
                         except Exception as e:
-                            await message.reply(f"⚠️ Lỗi AI: {e}")
+                            await message.reply(f"Lỗi AI: {e}")
             
             # Nếu KHÔNG có từ khóa -> Trả lời bằng "Chữ" mặc định đã cài trên Web
             else:
@@ -95,7 +95,7 @@ async def start_bot_logic(token, gemini_key, trigger, default_text):
 
         await bot.start(token)
     except Exception as e:
-        print(f"❌ Lỗi: {e}")
+        print(f" Lỗi: {e}")
 
 def run_it(t, k, tr, df):
     loop = asyncio.new_event_loop()
@@ -112,7 +112,7 @@ def handle():
     thread = Thread(target=run_it, args=(t, k, tr, df))
     thread.daemon = True
     thread.start()
-    return f"<h3>✅ Bot đã chạy!</h3><p>Từ khóa: {tr}</p><a href='/'>Quay lại</a>"
+    return f"<h3> Bot đã chạy!</h3><p>Từ khóa: {tr}</p><a href='/'>Quay lại</a>"
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
