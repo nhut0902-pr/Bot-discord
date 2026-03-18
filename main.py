@@ -108,7 +108,7 @@ def home():
 async def start_bot_process(token, key, trigger, default):
     try:
         genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-3.1-pro')
         bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
 
         # Lệnh Spam Toàn Cầu
