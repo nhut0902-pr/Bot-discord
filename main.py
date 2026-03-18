@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import os
 import google.generativeai as genai
 from flask import Flask, request, render_template_string, jsonify
@@ -9,9 +10,9 @@ from datetime import datetime
 
 app = Flask('')
 
-# Biến lưu trữ trạng thái các bot
+# Quản lý trạng thái
 running_bots = {} 
-bot_logs = {} # Lưu log cho từng bot
+bot_logs = {}
 
 def add_log(token, message):
     time_str = datetime.now().strftime("%H:%M:%S")
@@ -23,7 +24,7 @@ HTML_PAGE = '''
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Nhutcoder AI Management</title>
+    <title>Nhutcoder AI System</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -34,9 +35,7 @@ HTML_PAGE = '''
         .btn-group { display: flex; gap: 10px; }
         button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn-run { background: #0284c7; color: white; }
-        .btn-run:hover { background: #0369a1; }
         .btn-stop { background: #ef4444; color: white; }
-        .btn-stop:hover { background: #dc2626; }
         .log-box { background: #000; color: #10b981; padding: 10px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; height: 120px; overflow-y: auto; margin-top: 15px; border: 1px solid #334155; }
         .footer { margin-top: 20px; font-size: 0.8rem; color: #64748b; text-align: center; }
         .svg-icon { width: 18px; height: 18px; fill: currentColor; }
@@ -45,7 +44,7 @@ HTML_PAGE = '''
 <body>
     <div class="container">
         <h2>
-            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M13,2V4H11V2H13M17,4L15.59,5.41L17,6.83L18.41,5.41L17,4M9,4L7.59,5.41L9,6.83L10.41,5.41L9,4M12,6A6,6 0 0,0 6,12C6,15.31 8.69,18 12,18A6,6 0 0,0 18,12C18,8.69 15.31,6 12,6M12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16M12,20V22H14V20H12M18,20L16.59,18.59L18,17.17L19.41,18.59L18,20M6,20L4.59,18.59L6,17.17L7.41,18.59L6,20Z"/></svg>
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/></svg>
             Nhutcoder AI System
         </h2>
         <form id="botForm">
@@ -60,35 +59,26 @@ HTML_PAGE = '''
             
             <div class="btn-group">
                 <button type="button" class="btn-run" onclick="actionBot('run')">
-                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg> Chạy Bot
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M8,5V19L19,12L8,5Z"/></svg> Chạy Bot
                 </button>
                 <button type="button" class="btn-stop" onclick="actionBot('stop')">
                     <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18,18H6V6H18V18Z"/></svg> Tắt Bot
                 </button>
             </div>
         </form>
-
-        <div class="log-box" id="logs">Đang chờ lệnh...</div>
+        <div class="log-box" id="logs">Sẵn sàng chờ lệnh...</div>
         <div class="footer">Powered By Nhutcoder © 2026</div>
     </div>
-
     <script>
         function actionBot(type) {
             const formData = new FormData(document.getElementById('botForm'));
             fetch('/' + type + '-bot', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => alert(data.message));
+            .then(res => res.json()).then(data => alert(data.message));
         }
-
         setInterval(() => {
-            const token = document.getElementById('token').value;
-            if(token) {
-                fetch('/get-logs?token=' + token)
-                .then(res => res.json())
-                .then(data => {
-                    if(data.logs) document.getElementById('logs').innerHTML = data.logs.join('<br>');
-                });
-            }
+            const t = document.getElementById('token').value;
+            if(t) fetch('/get-logs?token=' + t).then(res => res.json())
+            .then(data => { if(data.logs) document.getElementById('logs').innerHTML = data.logs.join('<br>'); });
         }, 2000);
     </script>
 </body>
@@ -102,8 +92,19 @@ def home():
 async def start_bot(token, key, trigger, default):
     try:
         genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-3.0-flash')
         bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
+
+        # --- TÍNH NĂNG SPAM NẰM Ở ĐÂY ---
+        @bot.tree.command(name="spamall", description="Spam tin nhắn hàng loạt chuyên nghiệp")
+        @app_commands.describe(count="Số lần", content="Nội dung")
+        async def spamall(interaction: discord.Interaction, count: int, content: str):
+            await interaction.response.send_message(f"Nhutcoder Tool: Đang spam {count} lần...", ephemeral=True)
+            add_log(token, f"Đang chạy spam cho {interaction.user}")
+            limit = min(count, 100000) 
+            for _ in range(limit):
+                await interaction.channel.send(content)
+                await asyncio.sleep(0.5)
 
         @bot.event
         async def on_ready():
@@ -114,14 +115,13 @@ async def start_bot(token, key, trigger, default):
         async def on_message(message):
             if message.author.bot: return
             if trigger.lower() in message.content.lower():
-                add_log(token, f"Dùng AI cho: {message.author}")
+                add_log(token, f"AI đang trả lời {message.author}")
                 query = message.content.lower().replace(trigger.lower(), "").strip()
                 res = model.generate_content(query)
                 await message.reply(res.text)
             elif default:
                 await message.reply(default)
 
-        # Lưu bot vào dict để có thể tắt
         running_bots[token] = bot
         await bot.start(token)
     except Exception as e:
@@ -131,24 +131,26 @@ async def start_bot(token, key, trigger, default):
 def handle_run():
     t, k, tr, df = request.form.get('token'), request.form.get('gemini_key'), request.form.get('trigger'), request.form.get('default_text')
     if t in running_bots: return jsonify({"message": "Bot đang chạy rồi!"})
-    add_log(t, "Đang khởi động...")
+    add_log(t, "Khởi động...")
     Thread(target=lambda: asyncio.run(start_bot(t, k, tr, df)), daemon=True).start()
-    return jsonify({"message": "Lệnh chạy đã gửi!"})
+    return jsonify({"message": "Đã gửi lệnh chạy!"})
 
 @app.route('/stop-bot', methods=['POST'])
 def handle_stop():
     t = request.form.get('token')
     if t in running_bots:
-        asyncio.run_coroutine_threadsafe(running_bots[t].close(), asyncio.get_event_loop())
+        # Cách tắt bot an toàn cho Pydroid/Render
+        bot_to_stop = running_bots[t]
+        asyncio.run_coroutine_threadsafe(bot_to_stop.close(), asyncio.get_event_loop())
         del running_bots[t]
-        add_log(t, "Bot đã dừng.")
+        add_log(t, "Đã tắt bot.")
         return jsonify({"message": "Đã tắt bot!"})
-    return jsonify({"message": "Bot không hoạt động."})
+    return jsonify({"message": "Không tìm thấy bot đang chạy."})
 
 @app.route('/get-logs')
 def get_logs():
-    token = request.args.get('token')
-    return jsonify({"logs": bot_logs.get(token, ["Trống"])})
+    return jsonify({"logs": bot_logs.get(request.args.get('token'), ["Đang chờ..."])})
 
 if __name__ == "__main__":
+    # Pydroid dùng port 5000, Render dùng 10000
     app.run(host='0.0.0.0', port=10000)
