@@ -1,9 +1,7 @@
-from flask import Flask, render_template_string, request, send_file
+from flask import Flask, render_template_string, send_file
 import random
 
 app = Flask(__name__)
-
-REAL_KEY = "MINHNHUTDEPTRAI30000"
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -67,11 +65,9 @@ HTML_TEMPLATE = """
 </head>
 <body>
     <div class="container">
-        <h1>RAID SPAM 30000 - BOT TOKEN</h1>
-        <p>Nhập key + Bot Token Discord (không phải user token)</p>
+        <h1>RAID SPAM 30000</h1>
+        <p>Dán Bot Token vào rồi ACTIVATE để tạo file</p>
         
-        <input type="text" id="key" placeholder="KEY: MINHNHUTDEPTRAI30000">
-        <br>
         <input type="password" id="token" placeholder="DÁN BOT TOKEN VÀO ĐÂY">
         
         <br><br>
@@ -85,19 +81,13 @@ HTML_TEMPLATE = """
         let generatedCode = "";
 
         function activate() {
-            const key = document.getElementById("key").value.trim();
             const token = document.getElementById("token").value.trim();
             const resultDiv = document.getElementById("result");
 
-            if (key !== "{{ REAL_KEY }}") {
-                resultDiv.style.display = "block";
-                resultDiv.style.color = "#ff0000";
-                resultDiv.innerHTML = "KEY SAI RỒI CON NGU!<br>Key đúng là: MINHNHUTDEPTRAI30000";
-                return;
-            }
             if (!token) {
                 resultDiv.style.display = "block";
-                resultDiv.innerHTML = "Dán Bot Token vào đi thằng ngu!";
+                resultDiv.style.color = "#ff0000";
+                resultDiv.innerHTML = "Đụ má mày dán token vào đi con ngu!";
                 return;
             }
 
@@ -116,40 +106,76 @@ insults = [
     "@everyone lồn mẹ server này"
 ]
 
+tree = bot.tree
+
 @bot.event
 async def on_ready():
-    print(f"Bot raid sẵn sàng - Logged as {bot.user}")
+    await tree.sync()
+    print(f"Bot sẵn sàng - Logged as {bot.user}")
+    print("Slash command đã sync! Gõ /spam hoặc !spam30000")
+
+@tree.command(name="spam", description="Spam chửi nhanh")
+async def spam_slash(interaction, amount: int = 100):
+    await interaction.response.send_message("Đang spam...", ephemeral=True)
+    for i in range(amount):
+        try:
+            msg = random.choice(insults).format("@everyone")
+            await interaction.channel.send(msg)
+            await asyncio.sleep(0.35)
+        except:
+            await asyncio.sleep(5)
+    await interaction.followup.send("Spam xong đợt này!", ephemeral=True)
+
+@tree.command(name="spam30000", description="Spam cực mạnh 30000 lần")
+async def spam30000_slash(interaction):
+    await interaction.response.send_message("Bắt đầu spam 30000 lần...", ephemeral=True)
+    for _ in range(100):
+        for i in range(300):
+            try:
+                msg = random.choice(insults).format("@everyone")
+                await interaction.channel.send(msg)
+                await asyncio.sleep(0.3)
+            except:
+                await asyncio.sleep(5)
+        await asyncio.sleep(3)
+    await interaction.followup.send("Đã spam xong 30000 lần! Server sập mẹ nó rồi!", ephemeral=True)
 
 @bot.command()
 async def spam(ctx, amount: int = 100):
     for i in range(amount):
         try:
             msg = random.choice(insults).format("@everyone")
-            await ctx.channel.send(msg)
+            await ctx.send(msg)
             await asyncio.sleep(0.35)
-        except Exception as e:
-            print(f"Lỗi: {e}")
+        except:
             await asyncio.sleep(5)
-    print("Spam xong đợt này!")
+    await ctx.send("Spam xong!")
 
 @bot.command()
 async def spam30000(ctx):
-    print("Bắt đầu spam 30000 lần - Server sắp sập mẹ nó!")
+    await ctx.send("Bắt đầu spam 30000 lần...")
     for _ in range(100):
-        await spam(ctx, 300)
+        for i in range(300):
+            try:
+                msg = random.choice(insults).format("@everyone")
+                await ctx.send(msg)
+                await asyncio.sleep(0.3)
+            except:
+                await asyncio.sleep(5)
         await asyncio.sleep(3)
+    await ctx.send("Spam 30000 lần xong! Server chết mẹ nó!")
 
 bot.run("${token}")`;
 
             resultDiv.style.display = "block";
             resultDiv.style.color = "#00ff00";
-            resultDiv.innerHTML = `<strong>BOT TOKEN ĐÃ NHẬP OK!</strong><br><br><strong>CODE FULL:</strong><br><pre>${generatedCode}</pre>`;
-            alert("Activate thành công! Tải file và chạy python raid_spam.py");
+            resultDiv.innerHTML = `<strong>CODE ĐÃ SẴN - CÓ SLASH COMMAND!</strong><br><br><strong>CODE FULL:</strong><br><pre>${generatedCode}</pre>`;
+            alert("Tạo file thành công! Invite bot vào server rồi gõ /spam hoặc !spam30000");
         }
 
         function downloadFile() {
             if (!generatedCode) {
-                alert("Nhập key + Bot Token rồi nhấn ACTIVATE trước đã con đĩ!");
+                alert("Nhấn ACTIVATE trước đã con đĩ!");
                 return;
             }
             const blob = new Blob([generatedCode], {type: "text/plain"});
@@ -157,7 +183,7 @@ bot.run("${token}")`;
             a.href = URL.createObjectURL(blob);
             a.download = "raid_spam.py";
             a.click();
-            alert("Tải xong raid_spam.py! Chạy python raid_spam.py rồi invite bot vào server và gõ !spam30000");
+            alert("Tải xong raid_spam.py! Invite bot → gõ /spam30000 hoặc !spam30000");
         }
     </script>
 </body>
@@ -166,10 +192,9 @@ bot.run("${token}")`;
 
 @app.route("/")
 def index():
-    return render_template_string(HTML_TEMPLATE, REAL_KEY=REAL_KEY)
+    return render_template_string(HTML_TEMPLATE)
 
 if __name__ == "__main__":
-    print("=== RAID BOT TOKEN SERVER ĐÃ CHẠY ===")
-    print("Mở trình duyệt: http://127.0.0.1:5000")
-    print("Dùng Bot Token thật (tạo ở https://discord.com/developers/applications)")
+    print("=== RAID BOT SERVER CHẠY ===")
+    print("Mở: http://127.0.0.1:5000")
     app.run(debug=True, host="0.0.0.0", port=5000)
