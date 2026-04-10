@@ -4,7 +4,10 @@ import asyncio
 import random
 import os
 
-intents = discord.Intents.all()
+intents = discord.Intents.default()
+intents.message_content = True   # Bắt buộc cho prefix command
+intents.members = True
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 insults = [
@@ -16,71 +19,55 @@ insults = [
 
 @bot.event
 async def on_ready():
-    print(f"Bot raid sẵn sàng - Logged as {bot.user}")
-    print("Gõ !sync để sync slash command nếu chưa hiện")
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game("Đang spam 30000 lần cặc lồn"))
+    print(f"Bot RAID ONLINE MÀU XANH - Logged as {bot.user}")
+    print("Gõ !sync nếu slash command chưa hiện")
 
 @bot.command()
 async def sync(ctx):
-    if ctx.author.id != 1465342886303240385:  # Thay bằng ID Discord của mày nếu muốn
-        await ctx.send("Mày không phải owner, cút!")
-        return
-    try:
-        await bot.tree.sync()
-        await ctx.send("Đã sync slash command global! Gõ /spam hoặc /spam30000 thử đi thằng ngu.")
-        print("Sync command thành công!")
-    except Exception as e:
-        await ctx.send(f"Lỗi sync: {e}")
+    if ctx.author.id != 1465342886303240385:  # ID Discord của mày
+        return await ctx.send("Mày không phải owner ngu vl!")
+    await bot.tree.sync()
+    await ctx.send("Đã sync slash command! Giờ gõ /spam30000 thử đi thằng đĩ.")
 
-@bot.tree.command(name="spam", description="Spam chửi nhanh")
+@bot.tree.command(name="spam", description="Spam chửi")
 async def spam_slash(interaction, amount: int = 100):
     await interaction.response.send_message("Đang spam...", ephemeral=True)
-    for i in range(amount):
+    for _ in range(amount):
         try:
             msg = random.choice(insults).format("@everyone")
             await interaction.channel.send(msg)
-            await asyncio.sleep(0.35)
+            await asyncio.sleep(0.4)
         except:
-            await asyncio.sleep(5)
+            await asyncio.sleep(6)
     await interaction.followup.send("Spam xong!", ephemeral=True)
 
 @bot.tree.command(name="spam30000", description="Spam cực mạnh 30000 lần")
 async def spam30000_slash(interaction):
-    await interaction.response.send_message("Bắt đầu spam 30000 lần...", ephemeral=True)
+    await interaction.response.send_message("Bắt đầu spam 30000 lần - Server sắp sập!", ephemeral=True)
     for _ in range(100):
-        for i in range(300):
+        for _ in range(300):
             try:
                 msg = random.choice(insults).format("@everyone")
                 await interaction.channel.send(msg)
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.35)
             except:
-                await asyncio.sleep(5)
-        await asyncio.sleep(3)
-    await interaction.followup.send("Spam 30000 lần xong! Server sập mẹ nó!", ephemeral=True)
-
-@bot.command()
-async def spam(ctx, amount: int = 100):
-    await ctx.send("Đang spam...")
-    for i in range(amount):
-        try:
-            msg = random.choice(insults).format("@everyone")
-            await ctx.send(msg)
-            await asyncio.sleep(0.35)
-        except:
-            await asyncio.sleep(5)
-    await ctx.send("Spam xong!")
+                await asyncio.sleep(6)
+        await asyncio.sleep(4)
+    await interaction.followup.send("30000 lần xong! Server chết mẹ nó rồi!", ephemeral=True)
 
 @bot.command()
 async def spam30000(ctx):
     await ctx.send("Bắt đầu spam 30000 lần...")
     for _ in range(100):
-        for i in range(300):
+        for _ in range(300):
             try:
                 msg = random.choice(insults).format("@everyone")
                 await ctx.send(msg)
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.35)
             except:
-                await asyncio.sleep(5)
-        await asyncio.sleep(3)
-    await ctx.send("Spam 30000 lần xong! Server chết mẹ nó!")
+                await asyncio.sleep(6)
+        await asyncio.sleep(4)
+    await ctx.send("Spam 30000 lần xong! Server nổ tung mẹ nó!")
 
-bot.run(os.getenv("TOKEN", "PASTE_TOKEN_VAO_DAY_NEU_CHAY_LOCAL"))
+bot.run(os.getenv("TOKEN"))
