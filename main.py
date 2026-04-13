@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot Slash Command / thuần - Hacker Minh Nhựt"
+    return "Bot Slash / Thuần - Spam Sex 30000 - Hacker Minh Nhựt"
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -25,29 +25,29 @@ porn_images = ["https://i.imgur.com/NSp1v7K.jpeg"]
 
 @bot.event
 async def on_ready():
-    print(f"Bot SLASH / ONLINE - {bot.user}")
+    print(f"Bot SLASH COMMAND ONLINE - {bot.user}")
 
-# ==================== SYNC MẠNH TAY ====================
-@bot.tree.command(name="sync", description="Sync lại tất cả lệnh / (gõ lệnh này trước)")
+# ==================== SYNC MẠNH ĐỂ XÓA LỆNH CŨ ====================
+@bot.tree.command(name="sync", description="Xóa lệnh cũ và sync lệnh mới (gõ cái này trước)")
 async def force_sync(interaction):
     try:
         await bot.tree.sync(guild=interaction.guild)
-        await interaction.response.send_message("✅ Đã xóa lệnh cũ và sync lệnh mới! Giờ gõ /help thử đi thằng ngu!", ephemeral=False)
+        await interaction.response.send_message("✅ ĐÃ XÓA LỆNH CŦ VÀ SYNC LỆNH MỚI! Giờ gõ /help thử đi thằng ngu!", ephemeral=False)
     except Exception as e:
-        await interaction.response.send_message(f"Lỗi: {e}", ephemeral=True)
+        await interaction.response.send_message(f"Lỗi sync: {e}", ephemeral=True)
 
 @bot.tree.command(name="help", description="Xem tất cả lệnh slash /")
 async def help_cmd(interaction):
-    embed = discord.Embed(title="Danh sách lệnh /", color=0xff0000)
+    embed = discord.Embed(title="📋 Danh sách lệnh Slash /", color=0xff0000)
     embed.add_field(name="/spam30000", value="Spam 30000 lần cặc lồn", inline=False)
-    embed.add_field(name="/sex [số lần]", value="Spam chat sex", inline=False)
-    embed.add_field(name="/porn [số lần]", value="Gửi ảnh sex", inline=False)
+    embed.add_field(name="/sex [số]", value="Spam chat sex", inline=False)
+    embed.add_field(name="/porn [số]", value="Gửi ảnh sex", inline=False)
     embed.add_field(name="/kick @user", value="Kick người", inline=False)
     embed.add_field(name="/ban @user", value="Ban người", inline=False)
-    embed.add_field(name="/mass [số lần]", value="Mass mention chửi", inline=False)
+    embed.add_field(name="/mass [số]", value="Mass mention chửi", inline=False)
     embed.add_field(name="/clear [số]", value="Xóa tin nhắn", inline=False)
     embed.add_field(name="/nuke", value="Nuke server (nguy hiểm)", inline=False)
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed, ephemeral=False)
 
 @bot.tree.command(name="spam30000", description="Spam 30000 lần cặc lồn")
 async def spam30000_slash(interaction):
@@ -82,7 +82,7 @@ async def porn_slash(interaction, times: int = 8):
             await asyncio.sleep(1.2)
         except:
             await asyncio.sleep(3)
-    await interaction.followup.send("Gửi ảnh xong!", ephemeral=True)
+    await interaction.followup.send("Gửi ảnh sex xong!", ephemeral=True)
 
 @bot.tree.command(name="kick", description="Kick người")
 async def kick_slash(interaction, member: discord.Member):
@@ -114,7 +114,7 @@ async def clear_slash(interaction, amount: int = 50):
 
 @bot.tree.command(name="nuke", description="Nuke server")
 async def nuke_slash(interaction):
-    await interaction.response.send_message("BẮT ĐẦU NUKE...", ephemeral=True)
+    await interaction.response.send_message("BẮT ĐẦU NUKE SERVER...", ephemeral=True)
     for ch in list(interaction.guild.channels):
         try:
             await ch.delete()
@@ -129,7 +129,7 @@ async def nuke_slash(interaction):
             pass
     await interaction.followup.send("NUKE XONG! Server thành đống cặc lồn!", ephemeral=True)
 
-# ============== CHẠY ==============
+# ============== CHẠY FLASK + BOT ==============
 def run_flask():
     app.run(host="0.0.0.0", port=5000)
 
